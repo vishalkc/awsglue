@@ -18,8 +18,8 @@ RUN apt-get update \
  && apt-get install -y build-essential libssl-dev libffi-dev python3-pip python3-dev apt-transport-https gnupg ca-certificates
 
 # Use Zscaler certificate
-COPY my-root-ca.crt /usr/local/share/ca-certificates
-RUN update-ca-certificates	
+# COPY my-root-ca.crt /usr/local/share/ca-certificates
+# RUN update-ca-certificates	
 
 # JDK 8 installation
 RUN wget https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public -O public.key && \
@@ -38,14 +38,14 @@ RUN useradd -m -s /bin/bash -N -u $CSCS_UID $CSCS_USER && \
 
 # Install Spark maven and Zeppelin
 RUN curl -SsL https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-common/apache-maven-3.6.0-bin.tar.gz | tar xzf - -C opt/ --warning=no-unknown-keyword
-# RUN curl -SsL https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-3.0/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz | tar xzf - -C opt/
-COPY spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz opt/
-RUN tar -xvf opt/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz -C opt/ \
- 	&& rm opt/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz
+RUN curl -SsL https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-3.0/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz | tar xzf - -C opt/
+# COPY spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz opt/
+# RUN tar -xvf opt/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz -C opt/ \
+#  	&& rm opt/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz
 RUN curl -SsL https://dlcdn.apache.org/zeppelin/zeppelin-0.10.0/zeppelin-0.10.0.tgz | tar xvzf - -C opt/ --warning=no-unknown-keyword
 
 #Copy AWS Glue libs to opt/amazon/
-ADD ./glue3-opt-amazon.tgz opt/amazon/
+# ADD ./glue3-opt-amazon.tgz opt/amazon/
 
 # Env variables
 ENV MAVEN_HOME=/opt/apache-maven-3.6.0
@@ -66,14 +66,14 @@ RUN \
     && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias mavencert -file mavenCert.cer
 RUN echo "Installing Jupyter" && pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org sparkmagic jupyter && python3 -m pip install ipykernel && python3 -m ipykernel install && jupyter nbextension enable --py --sys-prefix widgetsnbextension && cd /usr/local/lib/python3.7/site-packages && jupyter-kernelspec install sparkmagic/kernels/pysparkkernel && jupyter-kernelspec install sparkmagic/kernels/sparkkernel && jupyter-kernelspec install sparkmagic/kernels/sparkrkernel && jupyter serverextension enable --py sparkmagic && echo "Installing Jupyter ends" 
 
-RUN echo "Installing Livy (might take a few mins)" && cd /home 
+RUN echo "Installing Livy (might take a few mins)" && cd /home
 RUN wget http://archive.apache.org/dist/incubator/livy/0.6.0-incubating/apache-livy-0.6.0-incubating-src.zip -O /home/livy.zip
-RUN unzip -q livy.zip && rm -f /home/livy.zip 
-RUN mv apache-livy-0.6.0-incubating livy 
-RUN cd /home/livy && mvn -q clean package -DskipTests && mkdir /home/livy/logs  
-RUN cp /home/livy/conf/livy.conf.template /home/livy/conf/livy.conf 
-RUN sed -i 's|# livy.repl.enable-hive-context =|livy.repl.enable-hive-context = true|g' /home/livy/conf/livy.conf  
-RUN echo "Installing Livy ends" 
+RUN unzip -q livy.zip && rm -f /home/livy.zip
+RUN mv apache-livy-0.6.0-incubating livy
+RUN cd /home/livy && mvn -q clean package -DskipTests && mkdir /home/livy/logs
+RUN cp /home/livy/conf/livy.conf.template /home/livy/conf/livy.conf
+RUN sed -i 's|# livy.repl.enable-hive-context =|livy.repl.enable-hive-context = true|g' /home/livy/conf/livy.conf
+RUN echo "Installing Livy ends"
 RUN echo "Setting notebook config" && mkdir /root/.sparkmagic && cd /root/.sparkmagic && echo '{  "kernel_python_credentials" : {    "username": "",    "password": "",    "url": "http://localhost:8998",    "auth": "None"  },  "kernel_scala_credentials" : {    "username": "",    "password": "",    "url": "http://localhost:8998",    "auth": "None"  },  "kernel_r_credentials": {    "username": "",    "password": "",    "url": "http://localhost:8998"  },  "logging_config": {    "version": 1,    "formatters": {      "magicsFormatter": {         "format": "%(asctime)s %(levelname)s %(message)s",        "datefmt": ""      }    },    "handlers": {      "magicsHandler": {         "class": "hdijupyterutils.filehandler.MagicsFileHandler",        "formatter": "magicsFormatter",        "home_path": "~/.sparkmagic"      }    },    "loggers": {      "magicsLogger": {         "handlers": ["magicsHandler"],        "level": "DEBUG",        "propagate": 0      }    }  },  "wait_for_idle_timeout_seconds": 15,  "livy_session_startup_timeout_seconds": 60,  "fatal_error_suggestion": "The code failed because of a fatal error. Some things to try: a) Make sure Spark has enough available resources for Jupyter to create a Spark context. b) Contact your Jupyter administrator to make sure the Spark magics library is configured correctly.   c) Restart the kernel.",  "ignore_ssl_errors": false,  "session_configs": {    "driverMemory": "1000M",    "executorCores": 2  },  "use_auto_viz": true,  "coerce_dataframe": true,  "max_results_sql": 2500,  "pyspark_dataframe_encoding": "utf-8",    "heartbeat_refresh_seconds": 30,  "livy_server_heartbeat_timeout_seconds": 0,  "heartbeat_retry_seconds": 10,  "server_extension_default_kernel_name": "pysparkkernel",  "custom_headers": {},    "retry_policy": "configurable",  "retry_seconds_to_sleep_list": [0.2, 0.5, 1, 3, 5],  "configurable_retry_policy_max_retries": 8}' > config.json && mkdir -p /home/jupyter/jupyter_default_dir && echo "c.NotebookApp.notebook_dir = '/home/jupyter/jupyter_default_dir'" > /root/.jupyter/jupyter_notebook_config.py && echo "#!/bin/bash" >> /home/jupyter/jupyter_start.sh && echo "nohup /home/livy/bin/livy-server &" >> /home/jupyter/jupyter_start.sh && echo "/usr/local/bin/jupyter notebook --allow-root --NotebookApp.token='' --NotebookApp.password='' --no-browser --ip=0.0.0.0" >> /home/jupyter/jupyter_start.sh && chmod 777 /home/jupyter/jupyter_start.sh && echo "Setting notebook config ends"
 
 EXPOSE 8888
