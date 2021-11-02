@@ -1,0 +1,22 @@
+version: '3'
+services:
+    gluedev:
+        container_name: awsglue
+        image: awsglue
+        ports:
+            - 8888:8888
+            - 4040:4040
+            - 8080:8080
+            - 7077:7077
+        restart: unless-stopped
+        environment:
+            ZEPPELIN_NOTEBOOK_DIR: 'opt/work/notebook'
+            ZEPPELIN_LOG_DIR: 'opt/work/notebook/logs'
+            AWS_PROFILE: 'default'
+        volumes:
+            - C:\Users\vishalkc2\.aws:/root/.aws
+            - ./glue-jobs:/opt/work/glue-jobs
+        entrypoint: /home/jupyter/jupyter_start.sh
+networks:
+    default:
+        driver: bridge
