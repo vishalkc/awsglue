@@ -96,6 +96,10 @@ RUN echo "Installing Zeppelin (might take a few mins)" && \
 	mkdir -p /home/zeppelin/logs /home/zeppelin/run /home/zeppelin/webapps && \
 	tar -xf /home/zeppelin-0.10.0-bin-all.tgz --strip-components=1 -C /home/zeppelin && \
 	rm -f /home/zeppelin-0.10.0-bin-all.tgz && \
+	mv /home/zeppelin/conf/zeppelin-site.xml.template /home/zeppelin/conf/zeppelin-site.xml && \
+	CONTENT="<property><name>zeppelin.interpreters</name><value>org.apache.zeppelin.spark.PySparkInterpreter, org.apache.zeppelin.spark.SparkInterpreter,org.apache.zeppelin.shell.ShellInterpreter</value></property>" && \
+	C=$(echo $CONTENT | sed 's/\//\\\//g') && \
+	sed -i "/<\/configuration>/ s/.*/${C}\n&/" /home/zeppelin/conf/zeppelin-site.xml && \
 	echo "Installing Zeppelin ends"
 
 CMD ["/home/zeppelin/bin/zeppelin.sh"]
