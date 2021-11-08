@@ -1,1 +1,1 @@
-# awsglue
+# INitial version of Docker file created to build an image for AWS Glue 3.0 and use for local development. Docker container will run under root user. Docker image is available at  

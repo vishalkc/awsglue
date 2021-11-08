@@ -102,5 +102,7 @@ RUN echo "Installing Zeppelin (might take a few mins)" && \
 	sed -i "/<\/configuration>/ s/.*/${C}\n&/" /home/zeppelin/conf/zeppelin-site.xml && \
 	echo "Installing Zeppelin ends"
 
+RUN echo "Installing python libraries (might take a few mins)" && \
+	pip install awscli boto3
 CMD ["/home/zeppelin/bin/zeppelin.sh"]
 

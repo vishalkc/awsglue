@@ -1,8 +1,8 @@
 version: '3'
 services:
     gluedev:
-        container_name: awsglue
-        image: awsglue
+        container_name: glue3.0
+        image: vishalkc2/glue3.0:latest
         ports:
             - 8888:8888
             - 4040:4040
@@ -14,7 +14,7 @@ services:
             ZEPPELIN_LOG_DIR: 'opt/work/notebook/logs'
             AWS_PROFILE: 'default'
         volumes:
-            - C:\Users\vishalkc2\.aws:/root/.aws
+            - <.aws folder path>:/root/.aws
             - ./glue-jobs:/opt/work/glue-jobs
         entrypoint: /home/jupyter/jupyter_start.sh
 networks:
